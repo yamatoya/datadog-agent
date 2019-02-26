@@ -652,7 +652,7 @@ func (c *SNMPCheck) Configure(data integration.Data, initConfig integration.Data
 	cfg := new(snmpConfig)
 	err = cfg.parse(data, initConfig)
 	if err != nil {
-		log.Criticalf("Error parsing configuration file: %s ", err)
+		log.Errorf("Error parsing configuration file: %s ", err)
 		return err
 	}
 	c.BuildID(data, initConfig)
@@ -660,7 +660,7 @@ func (c *SNMPCheck) Configure(data integration.Data, initConfig integration.Data
 
 	//init SNMP - will fail if missing snmp libs.
 	if err = initCNetSnmpLib(&c.cfg.initConf); err != nil {
-		log.Criticalf("Unable to configure check: %s ", err)
+		log.Errorf("Unable to configure check: %s ", err)
 		return err
 	}
 
