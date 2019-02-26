@@ -460,12 +460,10 @@ func Load() error {
 }
 
 func load(config Config, origin string) error {
-	log.Infof("config.Load()")
 	if err := config.ReadInConfig(); err != nil {
-		log.Warnf("config.load() error %v", err)
+		log.Warnf("Error loading config: %v", err)
 		return err
 	}
-	log.Infof("config.load succeeded")
 
 	// We have to init the secrets package before we can use it to decrypt
 	// anything.

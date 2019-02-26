@@ -37,7 +37,7 @@ func GetKubeletConnectionInfo() *C.PyObject {
 	if cached, hit := cache.Cache.Get(kubeletCacheKey); hit {
 		log.Debug("cache hit for kubelet connection info")
 		if creds, ok = cached.(map[string]string); !ok {
-			log.Error("invalid cache format, forcing a cache miss")
+			log.Warn("invalid cache format, forcing a cache miss")
 			creds = nil
 		}
 	}
