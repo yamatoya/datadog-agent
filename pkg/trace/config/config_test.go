@@ -372,10 +372,12 @@ func TestUndocumentedYamlConfig(t *testing.T) {
 	assert.Equal(0.5, c.AnalyzedRateByServiceLegacy["index"])
 	// analysis
 	assert.Len(c.AnalyzedSpansByService, 2)
-	assert.Len(c.AnalyzedSpansByService["web"], 2)
+	assert.Len(c.AnalyzedSpansByService["web"], 3)
 	assert.Len(c.AnalyzedSpansByService["db"], 1)
 	assert.Equal(0.8, c.AnalyzedSpansByService["web"]["request"])
 	assert.Equal(0.9, c.AnalyzedSpansByService["web"]["django.request"])
+	assert.Equal(0.7, c.AnalyzedSpansByService["web"]["get"])
+	assert.Equal(0.7, c.AnalyzedSpansByService["web"]["GET"])
 	assert.Equal(0.05, c.AnalyzedSpansByService["db"]["intake"])
 }
 

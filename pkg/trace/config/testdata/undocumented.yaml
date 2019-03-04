@@ -37,5 +37,6 @@ apm_config:
   analyzed_spans:
     web|request: 0.8
     web|django.request: 0.9
+    web|GET: 0.7
     db|intake: 0.05
     bad_format: 0.5
