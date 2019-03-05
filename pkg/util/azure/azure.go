@@ -20,9 +20,43 @@ var (
 
 // GetHostAlias returns the VM ID from the Azure Metadata api
 func GetHostAlias() (string, error) {
-	res, err := getResponse(metadataURL + "/metadata/instance/compute/vmId?api-version=2017-04-02&format=text")
+	res, err := getResponseWithMaxLength(metadataURL+"/metadata/instance/compute/vmId?api-version=2017-04-02&format=text", 255)
 	if err != nil {
 		return "", fmt.Errorf("Azure HostAliases: unable to query metadata endpoint: %s", err)
+	}
+
+	return res, nil
+}
+
+func getResponseWithMaxLength(endpoint string, maxLength int) (string, error) {
+	result, err := getResponse(endpoint)
+	if err != nil {
+		return result, err
+	}
+	if len(result) > maxLength {
+		return "", fmt.Errorf("%v gave a response with length > to %v", endpoint, maxLength)
+	}
+	return result, err
+}
+
+func getResponse(url string) (string, error) {
+	client := http.Client{
+		Timeout: timeout,
+	}
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return "", err
+	}
+
+	req.Header.Add("Metadata", "true")
+	res, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+
+	if res.StatusCode != 200 {
+		return "", fmt.Errorf("status code %d trying to GET %s", res.StatusCode, url)
 	}
 
 	defer res.Body.Close()
@@ -32,27 +66,4 @@ func GetHostAlias() (string, error) {
 	}
 
 	return string(all), nil
-}
-
-func getResponse(url string) (*http.Response, error) {
-	client := http.Client{
-		Timeout: timeout,
-	}
-
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Add("Metadata", "true")
-	res, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-
-	if res.StatusCode != 200 {
-		return nil, fmt.Errorf("status code %d trying to GET %s", res.StatusCode, url)
-	}
-
-	return res, nil
 }
