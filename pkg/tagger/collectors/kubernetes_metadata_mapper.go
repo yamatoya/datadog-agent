@@ -18,10 +18,34 @@ import (
 )
 
 func (c *KubeMetadataCollector) getTagInfos(pods []*kubelet.Pod) []*TagInfo {
+	var err error
+	metadataByNodesNsPods := map[string]map[string]map[string][]string{}
+	if config.Datadog.GetBool("cluster_agent.enabled") {
+		var nodes []string
+		// retrieve list of nodes
+		// Optimization: all pods in argument should run on the same node.
+		// in that case nodeName can be retrieve thanks kubeutils.GetNodename()
+		for _, pod := range pods {
+			if pod.Spec.NodeName == "" {
+				continue
+			}
+			if _, found := metadataByNodesNsPods[pod.Spec.NodeName]; !found {
+				nodes = append(nodes, pod.Spec.NodeName)
+				metadataByNodesNsPods[pod.Spec.NodeName] = map[string]map[string][]string{}
+			}
+		}
+		// then retrieves Pods metadatas by Nodes.
+		for _, nodeName := range nodes {
+			metadataByNodesNsPods[nodeName], err = c.dcaClient.GetPodsMetadataForNode(nodeName)
+			if err != nil {
+				log.Debugf("Could not pull the metadata map of pods on node %s from the Datadog Cluster Agent: %s", nodeName, err.Error())
+				continue
+			}
+		}
+	}
 	var tagInfo []*TagInfo
 	var metadataNames []string
 	var tag []string
-	var err error
 	for _, po := range pods {
 		if kubelet.IsPodReady(po) == false {
 			log.Debugf("pod %q is not ready, skipping", po.Metadata.Name)
@@ -51,11 +75,7 @@ func (c *KubeMetadataCollector) getTagInfos(pods []*kubelet.Pod) []*TagInfo {
 				continue
 			}
 		} else {
-			metadataNames, err = c.dcaClient.GetKubernetesMetadataNames(po.Spec.NodeName, po.Metadata.Namespace, po.Metadata.Name)
-			if err != nil {
-				log.Debugf("Could not pull the metadata map of po %s on node %s from the Datadog Cluster Agent: %s", po.Metadata.Name, po.Spec.NodeName, err.Error())
-				continue
-			}
+			metadataNames = metadataByNodesNsPods[po.Spec.NodeName][po.Metadata.Namespace][po.Metadata.Name]
 		}
 		for _, tagDCA := range metadataNames {
 			log.Tracef("Tagging %s with %s", po.Metadata.Name, tagDCA)
