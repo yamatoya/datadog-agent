@@ -49,11 +49,10 @@ func GetHostname() (string, error) {
 
 // GetHostAlias returns the host alias from GCE
 func GetHostAlias() (string, error) {
-	instanceName, err := getResponse(metadataURL + "/instance/hostname")
+	instanceName, err := getResponse(metadataURL + "/instance/name")
 	if err != nil {
-		return "", fmt.Errorf("unable to retrieve hostname from GCE: %s", err)
+		return "", fmt.Errorf("unable to retrieve instance name from GCE: %s", err)
 	}
-	instanceName = strings.SplitN(instanceName, ".", 2)[0]
 
 	projectID, err := getResponse(metadataURL + "/project/project-id")
 	if err != nil {
